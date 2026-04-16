@@ -1,0 +1,5 @@
+#!/bin/bash
+# ZeroHermes V2 Entry Point
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export PROJECT_ROOT
+source "$PROJECT_ROOT/bin/agent_loop.sh"

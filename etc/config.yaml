@@ -1,0 +1,13 @@
+# ZeroHermes V2 Configuration
+
+llm:
+ provider: openrouter
+ model: anthropic/claude-sonnet-4
+ timeout: 120
+
+memory:
+ max_session_age: 7d
+
+tools:
+ sandbox: true
+ timeout: 60

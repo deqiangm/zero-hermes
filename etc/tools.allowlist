@@ -1,0 +1,6 @@
+# Tool Allowlist
+shell_readonly
+file_read
+file_write
+file_search
+memory_recall
