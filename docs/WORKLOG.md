@@ -129,3 +129,17 @@
 - Total embedded Python removed from llm.sh: ~29 lines
 - Next: Phase 2.4 - Refactor tools.sh
 
+### 2026-04-16 (current session - Phase 2.4)
+- Phase 2.4 COMPLETE: tools.sh refactored
+- [x] Refactored execute_tool() JSON parsing
+ - Replaced embedded python3 -c "import json,sys..." with json_get()
+ - Removed 5 embedded Python one-liners:
+   - file_read: path extraction
+   - file_write: path + content extraction
+   - file_search: pattern extraction
+   - memory_recall: query extraction
+- Now uses: json_get "$args" "field" (from common.sh)
+- tools.sh now: ~129 lines (unchanged, cleaner code)
+- All embedded Python removed from tools.sh
+- Next: Phase 3 - Refactor agent_loop.sh
+

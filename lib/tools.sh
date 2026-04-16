@@ -88,20 +88,20 @@ execute_tool() {
  tool_shell_readonly "$args" "$timeout"
  ;;
  file_read)
- local path=$(echo "$args" | python3 -c "import json,sys; print(json.load(sys.stdin).get('path',''))" 2>/dev/null)
+ local path=$(json_get "$args" "path")
  tool_file_read "$path"
  ;;
  file_write)
- local path=$(echo "$args" | python3 -c "import json,sys; print(json.load(sys.stdin).get('path',''))" 2>/dev/null)
- local content=$(echo "$args" | python3 -c "import json,sys; print(json.load(sys.stdin).get('content',''))" 2>/dev/null)
+ local path=$(json_get "$args" "path")
+ local content=$(json_get "$args" "content")
  tool_file_write "$path" "$content"
  ;;
  file_search)
- local pattern=$(echo "$args" | python3 -c "import json,sys; print(json.load(sys.stdin).get('pattern',''))" 2>/dev/null)
+ local pattern=$(json_get "$args" "pattern")
  tool_file_search "$pattern"
  ;;
  memory_recall)
- local query=$(echo "$args" | python3 -c "import json,sys; print(json.load(sys.stdin).get('query',''))" 2>/dev/null)
+ local query=$(json_get "$args" "query")
  tool_memory_recall "$query"
  ;;
  *)

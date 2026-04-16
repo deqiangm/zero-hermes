@@ -59,8 +59,8 @@
 - [x] Remove embedded Python blocks
 
 ### 2.4 tools.sh
-- [ ] Refactor execute_tool() JSON parsing
-- [ ] Remove embedded Python blocks
+- [x] Refactor execute_tool() JSON parsing
+- [x] Remove embedded Python blocks
 
 ---
 
