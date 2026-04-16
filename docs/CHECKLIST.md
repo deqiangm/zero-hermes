@@ -67,10 +67,10 @@
 ## Phase 3: Refactor Agent Loop
 
 ### 3.1 agent_loop.sh
-- [ ] Refactor message array building
-- [ ] Refactor context processing loop
-- [ ] Refactor tool response handling
-- [ ] Test agent loop
+- [x] Refactor message array building
+- [x] Refactor context processing loop
+- [x] Refactor tool response handling
+- [x] Test agent loop
 
 ---
 

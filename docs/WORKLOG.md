@@ -134,12 +134,33 @@
 - [x] Refactored execute_tool() JSON parsing
  - Replaced embedded python3 -c "import json,sys..." with json_get()
  - Removed 5 embedded Python one-liners:
-   - file_read: path extraction
-   - file_write: path + content extraction
-   - file_search: pattern extraction
-   - memory_recall: query extraction
+ - file_read: path extraction
+ - file_write: path + content extraction
+ - file_search: pattern extraction
+ - memory_recall: query extraction
 - Now uses: json_get "$args" "field" (from common.sh)
 - tools.sh now: ~129 lines (unchanged, cleaner code)
 - All embedded Python removed from tools.sh
 - Next: Phase 3 - Refactor agent_loop.sh
+
+### 2026-04-16 (current session - Phase 3)
+- Phase 3 COMPLETE: agent_loop.sh refactored
+- [x] Added new pyhelper functions:
+ - append_message(): Append message to messages array
+ - get_messages_array(): Get messages as JSON array
+- [x] Added wrapper functions to common.sh:
+ - append_msg(): Shell wrapper for append-message
+ - get_msgs_array(): Shell wrapper for get-messages-array
+- [x] Refactored message array building
+ - Removed 3 embedded Python heredocs (lines 54-60, 62-74, 77-83)
+ - Now uses: append_msg() from common.sh
+- [x] Refactored tool response handling
+ - Removed embedded Python heredoc (lines 102-108)
+ - Now uses: append_msg() for tool result
+- [x] Refactored tool call extraction
+ - Now uses: pyhelper extract-tool command
+- All 6 tests passed after refactoring
+- agent_loop.sh now: ~117 lines (down from ~165)
+- Total embedded Python removed from agent_loop.sh: ~40 lines
+- Next: Phase 4 - Testing
 

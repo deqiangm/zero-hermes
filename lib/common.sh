@@ -39,9 +39,24 @@ _json_parse() {
 
 # Quick JSON field extraction
 json_get() {
- local data="$1"
- local field="$2"
- _json_parse "$data" ".$field"
+    local data="$1"
+    local field="$2"
+    _json_parse "$data" ".$field"
+}
+
+# Append message to messages array (for agent loop)
+append_msg() {
+    local messages="$1"
+    local role="$2"
+    local content="$3"
+    python3 "$PYHELPER" append-msg "$messages" "$role" "$content"
+}
+
+# Get messages as JSON array (for agent loop)
+get_msgs_array() {
+    local session="$1"
+    local limit="${2:-10}"
+    python3 "$PYHELPER" get-msgs-array "$session" "$limit"
 }
 
 # ============================================================================

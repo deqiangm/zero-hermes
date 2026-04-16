@@ -10,16 +10,18 @@ Options:
     --db PATH    Override database path (default: $DB_PATH or $DATA_DIR/state.db)
 
 Commands:
-    db-exec <sql> [params_json]          - Execute SQL, return JSON results
+    db-exec <sql> [params_json]      - Execute SQL, return JSON results
     save-msg <session> <role> <content> [metadata] - Save message
-    get-msgs <session> [limit]           - Get messages for session
-    search <query> [session] [limit]     - Search messages (FTS5)
-    json-get <json> <path>               - Extract value from JSON
-    json-build <key=value> ...           - Build JSON object
+    get-msgs <session> [limit]       - Get messages for session
+    search <query> [session] [limit] - Search messages (FTS5)
+    json-get <json> <path>           - Extract value from JSON
+    json-build <key=value> ...       - Build JSON object
     build-msgs <system> <user> [history] - Build messages array
-    parse-response <response>            - Parse LLM API response
-    extract-tool <response>              - Extract tool call from response
+    parse-response <response>        - Parse LLM API response
+    extract-tool <response>          - Extract tool call from response
     build-request <messages> [model] [temp] [max_tokens] - Build API request
+    append-msg <messages> <role> <content> - Append message to array
+    get-msgs-array <session> [limit] - Get messages as JSON array
 """
 
 import sqlite3
@@ -285,6 +287,26 @@ def build_request(messages: str, model: str, temperature: float = 0.7, max_token
     except Exception as e:
         return json.dumps({'error': str(e)})
 
+def append_message(messages: str, role: str, content: str) -> str:
+    """Append a message to an existing messages array."""
+    try:
+        msgs = json.loads(messages) if isinstance(messages, str) and messages else []
+        msgs.append({'role': role, 'content': content})
+        return json.dumps(msgs)
+    except Exception as e:
+        return json.dumps({'error': str(e)})
+
+def get_messages_array(session: str, limit: int = 10) -> str:
+    """Get messages as a JSON array (OpenAI format)."""
+    try:
+        rows = json.loads(db_exec(
+            'SELECT role, content FROM messages WHERE session_id = ? ORDER BY timestamp ASC LIMIT ?',
+            (session, limit)
+        ))
+        return json.dumps([{'role': r['role'], 'content': r['content']} for r in rows])
+    except Exception as e:
+        return json.dumps({'error': str(e)})
+
 # ============================================================================
 # Database Utilities
 # ============================================================================
@@ -405,6 +427,15 @@ def main():
             temperature = float(args[2]) if len(args) > 2 else 0.7
             max_tokens = int(args[3]) if len(args) > 3 else 4096
             result = build_request(messages, model, temperature, max_tokens)
+
+        elif cmd == 'append-msg':
+            messages, role, content = args[0], args[1], args[2]
+            result = append_message(messages, role, content)
+
+        elif cmd == 'get-msgs-array':
+            session = args[0]
+            limit = int(args[1]) if len(args) > 1 else 10
+            result = get_messages_array(session, limit)
 
         elif cmd == 'schema-version':
             result = str(get_schema_version())
