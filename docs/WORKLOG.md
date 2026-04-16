@@ -74,3 +74,10 @@
  - test_telegram_gateway.sh: PASS
  - test_tools.sh: PASS
 - Next: Phase 2.2 - Refactor memory.sh
+
+### 2026-04-16 (continuation)
+- Phase 2.2 IN PROGRESS: memory.sh refactoring
+ - [x] Refactored save_message() to use pyhelper
+ - Removed 15 lines of embedded Python
+ - Now uses: python3 $PYHELPER save-msg ...
+- Next: Refactor get_messages()

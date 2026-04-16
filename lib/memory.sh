@@ -15,25 +15,14 @@ save_message() {
  local content="$3"
  local metadata="${4:-}"
  
- local escaped_session=$(sql_escape "$session_id")
- local escaped_role=$(sql_escape "$role")
- local escaped_content=$(sql_escape "$content")
- local escaped_metadata=$(sql_escape "$metadata")
+ # Use pyhelper for message saving
+ local result
+ result=$(python3 "$PYHELPER" save-msg "$session_id" "$role" "$content" "$metadata" 2>/dev/null)
  
- python3 << EOF
-import sqlite3
-import json
-
-conn = sqlite3.connect("$DB_PATH")
-cursor = conn.cursor()
-cursor.execute("""
- INSERT INTO messages (session_id, role, content, metadata)
- VALUES (?, ?, ?, ?)
-""", ("$escaped_session", "$escaped_role", "$escaped_content", "$escaped_metadata"))
-conn.commit()
-print(cursor.lastrowid)
-conn.close()
-EOF
+ # Extract lastrowid from JSON result
+ if [[ -n "$result" ]]; then
+ python3 "$PYHELPER" json-get "$result" lastrowid 2>/dev/null
+ fi
 }
 
 get_messages() {

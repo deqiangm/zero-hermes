@@ -43,7 +43,7 @@
 - [x] Add pyhelper wrapper functions
 
 ### 2.2 memory.sh
-- [ ] Refactor save_message()
+- [x] Refactor save_message()
 - [ ] Refactor get_messages()
 - [ ] Refactor get_context()
 - [ ] Refactor search_messages()
