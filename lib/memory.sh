@@ -36,23 +36,7 @@ get_context() {
  local session_id="$1"
  local limit="${2:-10}"
  
- python3 << EOF
-import sqlite3
-
-conn = sqlite3.connect("$DB_PATH")
-cursor = conn.cursor()
-cursor.execute("""
- SELECT role, content
- FROM messages
- WHERE session_id = ?
- ORDER BY timestamp DESC
- LIMIT ?
-""", ("$session_id", $limit))
-
-for row in reversed(cursor.fetchall()):
- print(f"{row[0]}: {row[1]}")
-conn.close()
-EOF
+ python3 "$PYHELPER" get-context "$session_id" "$limit"
 }
 
 search_messages() {
