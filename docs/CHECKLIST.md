@@ -46,7 +46,7 @@
 - [x] Refactor save_message()
 - [x] Refactor get_messages()
 - [x] Refactor get_context()
-- [ ] Refactor search_messages()
+- [x] Refactor search_messages()
 - [ ] Refactor list_sessions()
 - [ ] Refactor get_session_stats()
 - [ ] Refactor delete_session()

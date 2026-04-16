@@ -44,35 +44,7 @@ search_messages() {
  local session_id="${2:-}"
  local limit="${3:-20}"
  
- python3 << EOF
-import sqlite3
-import json
-
-conn = sqlite3.connect("$DB_PATH")
-cursor = conn.cursor()
-
-sql = """
- SELECT m.id, m.session_id, m.role, m.content, m.timestamp
- FROM messages m
- JOIN messages_fts fts ON m.id = fts.rowid
- WHERE messages_fts MATCH ?
-"""
-
-params = ["$query"]
-if "$session_id":
- sql += " AND m.session_id = ?"
- params.append("$session_id")
-
-sql += " ORDER BY m.timestamp DESC LIMIT ?"
-params.append($limit)
-
-cursor.execute(sql, params)
-columns = [desc[0] for desc in cursor.description]
-rows = cursor.fetchall()
-results = [dict(zip(columns, row)) for row in rows]
-print(json.dumps(results))
-conn.close()
-EOF
+ python3 "$PYHELPER" search "$query" "$session_id" "$limit"
 }
 
 # ============================================================================
