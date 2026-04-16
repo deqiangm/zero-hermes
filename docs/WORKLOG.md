@@ -90,3 +90,17 @@
  - Removed 28 lines of embedded Python
  - Now uses: python3 $PYHELPER search ...
 - Next: Refactor list_sessions()
+
+### 2026-04-16 (current)
+- Phase 2.2 COMPLETE: memory.sh fully refactored
+ - [x] Refactored list_sessions() - removed 23 lines embedded Python
+ - [x] Refactored get_session_stats() - removed 25 lines embedded Python
+ - [x] Refactored delete_session() - removed 12 lines embedded Python
+ - [x] Refactored get_schema_version() - removed 8 lines embedded Python
+ - [x] Refactored check_database() - removed 8 lines embedded Python
+- Created test_memory_refactored.sh for new functions
+- All tests passed:
+ - test_memory_refactored.sh: PASS (7 tests)
+- Total embedded Python removed from memory.sh: ~120 lines
+- memory.sh now: ~160 lines (down from ~225)
+- Next: Phase 2.3 - Refactor llm.sh

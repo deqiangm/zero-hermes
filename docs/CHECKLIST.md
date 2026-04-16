@@ -47,11 +47,11 @@
 - [x] Refactor get_messages()
 - [x] Refactor get_context()
 - [x] Refactor search_messages()
-- [ ] Refactor list_sessions()
-- [ ] Refactor get_session_stats()
-- [ ] Refactor delete_session()
-- [ ] Refactor get_schema_version()
-- [ ] Refactor check_database()
+- [x] Refactor list_sessions()
+- [x] Refactor get_session_stats()
+- [x] Refactor delete_session()
+- [x] Refactor get_schema_version()
+- [x] Refactor check_database()
 
 ### 2.3 llm.sh
 - [ ] Refactor build_messages()

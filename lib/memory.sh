@@ -52,72 +52,17 @@ search_messages() {
 # ============================================================================
 
 list_sessions() {
- python3 << EOF
-import sqlite3
-import json
-
-conn = sqlite3.connect("$DB_PATH")
-cursor = conn.cursor()
-cursor.execute("""
- SELECT 
- session_id,
- COUNT(*) as message_count,
- MIN(timestamp) as first_message,
- MAX(timestamp) as last_message
- FROM messages
- GROUP BY session_id
- ORDER BY last_message DESC
-""")
-
-columns = [desc[0] for desc in cursor.description]
-rows = cursor.fetchall()
-results = [dict(zip(columns, row)) for row in rows]
-print(json.dumps(results))
-conn.close()
-EOF
+ python3 "$PYHELPER" list-sessions
 }
 
 get_session_stats() {
  local session_id="$1"
- 
- python3 << EOF
-import sqlite3
-import json
-
-conn = sqlite3.connect("$DB_PATH")
-cursor = conn.cursor()
-cursor.execute("""
- SELECT
- COUNT(*) as total_messages,
- SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as user_messages,
- SUM(CASE WHEN role = 'assistant' THEN 1 ELSE 0 END) as assistant_messages,
- MIN(timestamp) as first_message,
- MAX(timestamp) as last_message
- FROM messages
- WHERE session_id = ?
-""", ("$session_id"))
-
-columns = [desc[0] for desc in cursor.description]
-rows = cursor.fetchall()
-print(json.dumps(dict(zip(columns, rows[0]))))
-conn.close()
-EOF
+ python3 "$PYHELPER" session-stats "$session_id"
 }
 
 delete_session() {
  local session_id="$1"
- 
- python3 << EOF
-import sqlite3
-
-conn = sqlite3.connect("$DB_PATH")
-cursor = conn.cursor()
-cursor.execute("DELETE FROM messages WHERE session_id = ?", ("$session_id",))
-deleted = cursor.rowcount
-conn.commit()
-conn.close()
-print(deleted)
-EOF
+ python3 "$PYHELPER" delete-session "$session_id"
 }
 
 # ============================================================================
@@ -191,26 +136,12 @@ list_skills() {
 # ============================================================================
 
 get_schema_version() {
- python3 << EOF
-import sqlite3
-conn = sqlite3.connect("$DB_PATH")
-cursor = conn.cursor()
-cursor.execute("SELECT COALESCE(MAX(version), 0) FROM schema_version")
-print(cursor.fetchone()[0])
-conn.close()
-EOF
+ python3 "$PYHELPER" schema-version
 }
 
 check_database() {
- local result=$(python3 << EOF
-import sqlite3
-conn = sqlite3.connect("$DB_PATH")
-cursor = conn.cursor()
-cursor.execute("PRAGMA integrity_check")
-print(cursor.fetchone()[0])
-conn.close()
-EOF
-)
+ local result
+ result=$(python3 "$PYHELPER" check-db)
  [[ "$result" == "ok" ]] && return 0 || return 1
 }
 
