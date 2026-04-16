@@ -44,7 +44,7 @@
 
 ### 2.2 memory.sh
 - [x] Refactor save_message()
-- [ ] Refactor get_messages()
+- [x] Refactor get_messages()
 - [ ] Refactor get_context()
 - [ ] Refactor search_messages()
 - [ ] Refactor list_sessions()

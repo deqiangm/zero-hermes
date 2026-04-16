@@ -29,26 +29,7 @@ get_messages() {
  local session_id="$1"
  local limit="${2:-100}"
  
- python3 << EOF
-import sqlite3
-import json
-
-conn = sqlite3.connect("$DB_PATH")
-cursor = conn.cursor()
-cursor.execute("""
- SELECT id, role, content, timestamp, metadata
- FROM messages
- WHERE session_id = ?
- ORDER BY timestamp ASC
- LIMIT ?
-""", ("$session_id", $limit))
-
-columns = [desc[0] for desc in cursor.description]
-rows = cursor.fetchall()
-results = [dict(zip(columns, row)) for row in rows]
-print(json.dumps(results))
-conn.close()
-EOF
+ python3 "$PYHELPER" get-msgs "$session_id" "$limit"
 }
 
 get_context() {

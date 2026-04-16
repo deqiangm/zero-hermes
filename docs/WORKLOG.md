@@ -80,4 +80,7 @@
  - [x] Refactored save_message() to use pyhelper
  - Removed 15 lines of embedded Python
  - Now uses: python3 $PYHELPER save-msg ...
-- Next: Refactor get_messages()
+ - [x] Refactored get_messages() to use pyhelper
+ - Removed 22 lines of embedded Python
+ - Now uses: python3 $PYHELPER get-msgs ...
+- Next: Refactor get_context()
