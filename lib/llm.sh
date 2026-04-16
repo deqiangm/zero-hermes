@@ -34,19 +34,13 @@ is_provider_configured() {
  [[ -n "$api_key" ]]
 }
 
-# Build messages JSON using Python
+# Build messages JSON using pyhelper
 build_messages() {
  local system="$1"
  local user="$2"
+ local history="${3:-}"
  
- python3 << EOF
-import json
-messages = []
-if "$system":
- messages.append({"role": "system", "content": """$system"""})
-messages.append({"role": "user", "content": """$user"""})
-print(json.dumps(messages))
-EOF
+ python3 "$PYHELPER" build-msgs "$system" "$user" "$history"
 }
 
 # Call LLM API

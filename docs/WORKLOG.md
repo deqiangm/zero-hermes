@@ -104,3 +104,12 @@
 - Total embedded Python removed from memory.sh: ~120 lines
 - memory.sh now: ~160 lines (down from ~225)
 - Next: Phase 2.3 - Refactor llm.sh
+
+### 2026-04-16 (current session - Phase 2.3)
+- Phase 2.3 IN PROGRESS: llm.sh refactoring
+- [x] Refactored build_messages() to use pyhelper
+ - Removed 9 lines of embedded Python heredoc
+ - Now uses: python3 $PYHELPER build-msgs "$system" "$user" "$history"
+ - Added history parameter support (was missing before)
+- Next: Refactor call_llm() response parsing
+

@@ -54,7 +54,7 @@
 - [x] Refactor check_database()
 
 ### 2.3 llm.sh
-- [ ] Refactor build_messages()
+- [x] Refactor build_messages()
 - [ ] Refactor call_llm() response parsing
 - [ ] Remove embedded Python blocks
 
