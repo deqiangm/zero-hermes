@@ -1,4 +1,4 @@
-# ZeroHermes V2
+# ZeroHermes
 
 A minimal AI agent with Python-based SQLite and JSON processing.
 
@@ -14,8 +14,8 @@ A minimal AI agent with Python-based SQLite and JSON processing.
 
 ```bash
 # Clone
-git clone https://github.com/deqiangm/zero-hermes-v2.git
-cd zero-hermes-v2
+git clone https://github.com/deqiangm/zero-hermes.git
+cd zero-hermes
 
 # Configure
 cp .env.example .env

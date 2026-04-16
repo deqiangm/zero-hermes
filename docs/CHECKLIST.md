@@ -1,4 +1,4 @@
-# ZeroHermes V2 - Checklist
+# ZeroHermes - Checklist
 
 ## Status Legend
 - [ ] Pending

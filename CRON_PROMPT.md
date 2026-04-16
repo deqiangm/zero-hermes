@@ -1,10 +1,10 @@
-# ZeroHermes V2 Cron Job Prompt
+# ZeroHermes Cron Job Prompt
 
-You are continuing the ZeroHermes V2 project. Check the project status and continue development.
+You are continuing the ZeroHermes project. Check the project status and continue development.
 
 ## Project Location
-- Directory: ~/.hermes/cron/zero-hermes-v2/
-- GitHub: https://github.com/deqiangm/zero-hermes-v2
+- Directory: ~/.hermes/cron/zero-hermes/
+- GitHub: https://github.com/deqiangm/zero-hermes
 
 ## Current Status
 Check docs/CHECKLIST.md for task status.
