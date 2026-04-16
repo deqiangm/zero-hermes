@@ -40,19 +40,37 @@
 ### 2026-04-16 10:30 PST
 - Phase 1 COMPLETE: pyhelper.py created and tested
 - All 10 CLI commands working:
-  - json-get: JSON path extraction
-  - build-msgs: Build OpenAI message array
-  - parse-response: Extract content from LLM response
-  - db-exec: Execute SQL queries
-  - save-msg: Save message to database
-  - get-msgs: Retrieve conversation messages
-  - search: Full-text search messages
-  - get-context: Build LLM context window
-  - extract-tool: Parse tool calls from response
-  - help: CLI documentation
+ - json-get: JSON path extraction
+ - build-msgs: Build OpenAI message array
+ - parse-response: Extract content from LLM response
+ - db-exec: Execute SQL queries
+ - save-msg: Save message to database
+ - get-msgs: Retrieve conversation messages
+ - search: Full-text search messages
+ - get-context: Build LLM context window
+ - extract-tool: Parse tool calls from response
+ - help: CLI documentation
 - Tests verified:
-  - db-exec: Created table, inserted data, queried JSON extraction
-  - get-msgs: Successfully retrieved messages
-  - search: FTS5 search working with ranking
-  - get-context: Context window building correctly
+ - db-exec: Created table, inserted data, queried JSON extraction
+ - get-msgs: Successfully retrieved messages
+ - search: FTS5 search working with ranking
+ - get-context: Context window building correctly
 - Next: Phase 2 - Refactor Shell libraries
+
+### 2026-04-16 (current session)
+- Phase 2.1 COMPLETE: common.sh refactored
+ - Removed embedded Python from sql_exec()
+ - Removed embedded Python from sql_exec_json()
+ - Removed embedded Python from _json_parse()
+ - Added pyhelper wrapper functions with --db option support
+- pyhelper.py enhanced:
+ - Added --db PATH option for custom database path
+ - Added set_db_path() and get_db_path() functions
+ - Fixed lazy init to support path overrides
+- All 5 tests passed:
+ - test_database.sh: PASS
+ - test_llm.sh: PASS
+ - test_memory.sh: PASS
+ - test_telegram_gateway.sh: PASS
+ - test_tools.sh: PASS
+- Next: Phase 2.2 - Refactor memory.sh

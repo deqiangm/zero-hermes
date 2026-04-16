@@ -37,10 +37,10 @@
 ## Phase 2: Refactor Shell Libraries
 
 ### 2.1 common.sh
-- [ ] Remove sql_exec() embedded Python
-- [ ] Remove sql_exec_json() embedded Python
-- [ ] Remove _json_parse() embedded Python
-- [ ] Add pyhelper wrapper functions
+- [x] Remove sql_exec() embedded Python
+- [x] Remove sql_exec_json() embedded Python
+- [x] Remove _json_parse() embedded Python
+- [x] Add pyhelper wrapper functions
 
 ### 2.2 memory.sh
 - [ ] Refactor save_message()

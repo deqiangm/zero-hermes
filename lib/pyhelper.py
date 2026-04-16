@@ -4,18 +4,21 @@ ZeroHermes Python Helper
 A single-file module for core operations: database, JSON, messages.
 
 Usage:
-    python3 pyhelper.py <command> [args...]
+ python3 pyhelper.py [--db PATH] <command> [args...]
+
+Options:
+ --db PATH Override database path (default: $DB_PATH or $DATA_DIR/state.db)
 
 Commands:
-    db-exec <sql> [params_json]     - Execute SQL, return JSON results
-    save-msg <session> <role> <content> [metadata] - Save message
-    get-msgs <session> [limit]      - Get messages for session
-    search <query> [session] [limit] - Search messages (FTS5)
-    json-get <json> <path>          - Extract value from JSON
-    json-build <key=value> ...      - Build JSON object
-    build-msgs <system> <user> [history_json] - Build messages array
-    parse-response <response>       - Parse LLM API response
-    extract-tool <response>         - Extract tool call from response
+ db-exec <sql> [params_json] - Execute SQL, return JSON results
+ save-msg <session> <role> <content> [metadata] - Save message
+ get-msgs <session> [limit] - Get messages for session
+ search <query> [session] [limit] - Search messages (FTS5)
+ json-get <json> <path> - Extract value from JSON
+ json-build <key=value> ... - Build JSON object
+ build-msgs <system> <user> [history_json] - Build messages array
+ parse-response <response> - Parse LLM API response
+ extract-tool <response> - Extract tool call from response
 """
 
 import sqlite3
@@ -31,21 +34,32 @@ from typing import Optional, Any, List, Dict
 
 PROJECT_ROOT = os.environ.get('PROJECT_ROOT', str(Path(__file__).parent.parent))
 DATA_DIR = os.environ.get('DATA_DIR', f'{PROJECT_ROOT}/var')
-DB_PATH = os.environ.get('DB_PATH', f'{DATA_DIR}/state.db')
+DEFAULT_DB_PATH = os.environ.get('DB_PATH', f'{DATA_DIR}/state.db')
 
 # ============================================================================
 # Database Connection (Lazy Init)
 # ============================================================================
 
 _db_conn: Optional[sqlite3.Connection] = None
+_db_path_override: Optional[str] = None
+
+def set_db_path(path: str):
+    """Override database path."""
+    global _db_path_override
+    _db_path_override = path
+
+def get_db_path() -> str:
+    """Get current database path."""
+    return _db_path_override if _db_path_override else DEFAULT_DB_PATH
 
 def get_db() -> sqlite3.Connection:
     """Get database connection (lazy initialization, reused)."""
     global _db_conn
-    if _db_conn is None:
+    db_path = get_db_path()
+    if _db_conn is None or _db_path_override:
         # Ensure directory exists
-        Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
-        _db_conn = sqlite3.connect(DB_PATH)
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        _db_conn = sqlite3.connect(db_path)
         _db_conn.row_factory = sqlite3.Row
     return _db_conn
 
@@ -158,10 +172,10 @@ def get_context(session: str, limit: int = 10) -> str:
 def search_messages(query: str, session: str = '', limit: int = 20) -> str:
     """Search messages using FTS5."""
     sql = '''
-        SELECT m.id, m.session_id, m.role, m.content, m.timestamp
-        FROM messages m
-        JOIN messages_fts fts ON m.id = fts.rowid
-        WHERE messages_fts MATCH ?
+    SELECT m.id, m.session_id, m.role, m.content, m.timestamp
+    FROM messages m
+    JOIN messages_fts fts ON m.id = fts.rowid
+    WHERE messages_fts MATCH ?
     '''
     params = [query]
     
@@ -177,27 +191,27 @@ def search_messages(query: str, session: str = '', limit: int = 20) -> str:
 def list_sessions() -> str:
     """List all sessions with stats."""
     return db_exec('''
-        SELECT 
-            session_id,
-            COUNT(*) as message_count,
-            MIN(timestamp) as first_message,
-            MAX(timestamp) as last_message
-        FROM messages
-        GROUP BY session_id
-        ORDER BY last_message DESC
+    SELECT 
+    session_id,
+    COUNT(*) as message_count,
+    MIN(timestamp) as first_message,
+    MAX(timestamp) as last_message
+    FROM messages
+    GROUP BY session_id
+    ORDER BY last_message DESC
     ''')
 
 def get_session_stats(session: str) -> str:
     """Get statistics for a session."""
     return db_exec('''
-        SELECT
-            COUNT(*) as total_messages,
-            SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as user_messages,
-            SUM(CASE WHEN role = 'assistant' THEN 1 ELSE 0 END) as assistant_messages,
-            MIN(timestamp) as first_message,
-            MAX(timestamp) as last_message
-        FROM messages
-        WHERE session_id = ?
+    SELECT
+    COUNT(*) as total_messages,
+    SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as user_messages,
+    SUM(CASE WHEN role = 'assistant' THEN 1 ELSE 0 END) as assistant_messages,
+    MIN(timestamp) as first_message,
+    MAX(timestamp) as last_message
+    FROM messages
+    WHERE session_id = ?
     ''', (session,))
 
 def delete_session(session: str) -> str:
@@ -285,8 +299,21 @@ def main():
         print_usage()
         sys.exit(1)
     
-    cmd = sys.argv[1]
-    args = sys.argv[2:]
+    # Parse --db option if present
+    args = sys.argv[1:]
+    if args and args[0] == '--db':
+        if len(args) < 2:
+            print("Error: --db requires a path argument", file=sys.stderr)
+            sys.exit(1)
+        set_db_path(args[1])
+        args = args[2:]
+    
+    if not args:
+        print_usage()
+        sys.exit(1)
+    
+    cmd = args[0]
+    args = args[1:]
     
     try:
         result = ''
@@ -371,7 +398,7 @@ def main():
         
         if result:
             print(result)
-    
+        
     except Exception as e:
         print(json.dumps({'error': str(e)}), file=sys.stderr)
         sys.exit(1)

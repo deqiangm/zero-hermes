@@ -18,45 +18,23 @@ DB_PATH="${DB_PATH:-$DATA_DIR/state.db}"
 LOG_LEVEL="${LOG_LEVEL:-INFO}"
 LOG_FILE="${LOG_FILE:-$DATA_DIR/logs/zero-hermes.log}"
 
+# Get pyhelper path (used by JSON and SQLite functions)
+PYHELPER="${LIB_DIR}/pyhelper.py"
+
 # ============================================================================
-# JSON Processing (Python fallback)
+# JSON Processing (via pyhelper)
 # ============================================================================
 
-# Use Python for JSON if jq not available
+# Use Python for JSON (pyhelper-based)
 _json_parse() {
  local data="$1"
  local query="$2"
  
- if command -v jq >/dev/null 2>&1; then
- echo "$data" | jq -r "$query"
- else
- python3 -c "
-import json, sys
-data = json.loads(sys.stdin.read())
-query = '$query'
-# Simple jq-like query parsing
-if query.startswith('.'):
- query = query[1:]
-parts = query.split('.')
-result = data
-for part in parts:
- if not part: continue
- if part.endswith('[]'):
- part = part[:-2]
- result = result.get(part, [])
- elif '[' in part and part.endswith(']'):
- key = part[:part.index('[')]
- idx = int(part[part.index('[')+1:part.index(']')])
- result = result.get(key, [])[idx]
- else:
- result = result.get(part, '') if isinstance(result, dict) else ''
-if isinstance(result, list):
- for item in result:
- print(item if isinstance(item, str) else json.dumps(item))
-else:
- print(result if isinstance(result, str) else json.dumps(result))
-" <<< "$data" 2>/dev/null
- fi
+ # Convert jq-style path to pyhelper format
+ local path="${query#.}"
+ path="${path//[]/}"
+ 
+ python3 "$PYHELPER" json-get "$data" "$path" 2>/dev/null
 }
 
 # Quick JSON field extraction
@@ -103,42 +81,50 @@ log_warn() { _log WARN "$*"; }
 log_error() { _log ERROR "$*"; }
 
 # ============================================================================
-# SQLite Alternative (Python-based)
+# SQLite Operations (via pyhelper)
 # ============================================================================
 
-# Execute SQL using Python sqlite3
+# Execute SQL and return pipe-delimited results (legacy format)
 sql_exec() {
  local sql="$1"
  local db="${2:-$DB_PATH}"
  
- python3 -c "
-import sqlite3
-import sys
-
-db_path = '$db'
-sql = '''$sql'''
-
-try:
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.executescript(sql)
-    conn.commit()
-    
-    # If it's a SELECT, return results
-    if sql.strip().upper().startswith('SELECT'):
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        if rows:
-            for row in rows:
-                print('|'.join(str(c) if c else '' for c in row))
-    else:
-        print('Changes:', conn.total_changes)
-    
-    conn.close()
-except Exception as e:
-    print(f'ERROR: {e}', file=sys.stderr)
-    sys.exit(1)
-"
+ # Use pyhelper for SQL execution with --db option for custom path
+ local result
+ if [[ "$db" == "$DB_PATH" ]]; then
+ result=$(python3 "$PYHELPER" db-script "$sql" 2>/dev/null)
+ else
+ result=$(python3 "$PYHELPER" --db "$db" db-script "$sql" 2>/dev/null)
+ fi
+ 
+ # Check for errors
+ if echo "$result" | grep -q '"error"'; then
+ echo "$result" | python3 "$PYHELPER" json-get "$result" error >&2
+ return 1
+ fi
+ 
+ # For SELECT queries, re-execute with db-exec to get data
+ if echo "$sql" | grep -qi '^[[:space:]]*SELECT'; then
+ if [[ "$db" == "$DB_PATH" ]]; then
+ result=$(python3 "$PYHELPER" db-exec "$sql")
+ else
+ result=$(python3 "$PYHELPER" --db "$db" db-exec "$sql")
+ fi
+ if [[ -n "$result" ]] && [[ "$result" != "[]" ]]; then
+ # Convert JSON to pipe-delimited format for legacy compatibility
+ local lines
+ lines=$(python3 -c "
+import json
+rows = json.loads('$result')
+for row in rows:
+ print('|'.join(str(v) if v is not None else '' for v in row.values()))
+")
+ echo "$lines"
+ fi
+ else
+ # For non-SELECT, show changes
+ echo "$result"
+ fi
 }
 
 # Execute SQL and return JSON
@@ -146,25 +132,11 @@ sql_exec_json() {
  local sql="$1"
  local db="${2:-$DB_PATH}"
  
- python3 -c "
-import sqlite3
-import json
-
-db_path = '$db'
-sql = '''$sql'''
-
-conn = sqlite3.connect(db_path)
-cursor = conn.cursor()
-
-# Get column names
-cursor.execute(sql)
-columns = [desc[0] for desc in cursor.description] if cursor.description else []
-rows = cursor.fetchall()
-
-results = [dict(zip(columns, row)) for row in rows]
-print(json.dumps(results))
-conn.close()
-"
+ if [[ "$db" == "$DB_PATH" ]]; then
+ python3 "$PYHELPER" db-exec "$sql"
+ else
+ python3 "$PYHELPER" --db "$db" db-exec "$sql"
+ fi
 }
 
 # ============================================================================
