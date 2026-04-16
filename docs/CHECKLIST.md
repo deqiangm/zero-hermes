@@ -55,8 +55,8 @@
 
 ### 2.3 llm.sh
 - [x] Refactor build_messages()
-- [ ] Refactor call_llm() response parsing
-- [ ] Remove embedded Python blocks
+- [x] Refactor call_llm() response parsing
+- [x] Remove embedded Python blocks
 
 ### 2.4 tools.sh
 - [ ] Refactor execute_tool() JSON parsing

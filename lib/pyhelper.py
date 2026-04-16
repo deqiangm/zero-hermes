@@ -4,21 +4,22 @@ ZeroHermes Python Helper
 A single-file module for core operations: database, JSON, messages.
 
 Usage:
- python3 pyhelper.py [--db PATH] <command> [args...]
+    python3 pyhelper.py [--db PATH] <command> [args...]
 
 Options:
- --db PATH Override database path (default: $DB_PATH or $DATA_DIR/state.db)
+    --db PATH    Override database path (default: $DB_PATH or $DATA_DIR/state.db)
 
 Commands:
- db-exec <sql> [params_json] - Execute SQL, return JSON results
- save-msg <session> <role> <content> [metadata] - Save message
- get-msgs <session> [limit] - Get messages for session
- search <query> [session] [limit] - Search messages (FTS5)
- json-get <json> <path> - Extract value from JSON
- json-build <key=value> ... - Build JSON object
- build-msgs <system> <user> [history_json] - Build messages array
- parse-response <response> - Parse LLM API response
- extract-tool <response> - Extract tool call from response
+    db-exec <sql> [params_json]          - Execute SQL, return JSON results
+    save-msg <session> <role> <content> [metadata] - Save message
+    get-msgs <session> [limit]           - Get messages for session
+    search <query> [session] [limit]     - Search messages (FTS5)
+    json-get <json> <path>               - Extract value from JSON
+    json-build <key=value> ...           - Build JSON object
+    build-msgs <system> <user> [history] - Build messages array
+    parse-response <response>            - Parse LLM API response
+    extract-tool <response>              - Extract tool call from response
+    build-request <messages> [model] [temp] [max_tokens] - Build API request
 """
 
 import sqlite3
@@ -78,10 +79,10 @@ def db_exec(sql: str, params: tuple = (), fetch: bool = True) -> str:
     """Execute SQL and return results as JSON."""
     conn = get_db()
     cur = conn.cursor()
-    
+
     try:
         cur.execute(sql, params)
-        
+
         if fetch and cur.description:
             rows = [dict(r) for r in cur.fetchall()]
             return json.dumps(rows)
@@ -178,24 +179,24 @@ def search_messages(query: str, session: str = '', limit: int = 20) -> str:
     WHERE messages_fts MATCH ?
     '''
     params = [query]
-    
+
     if session:
         sql += ' AND m.session_id = ?'
         params.append(session)
-    
+
     sql += ' ORDER BY m.timestamp DESC LIMIT ?'
     params.append(limit)
-    
+
     return db_exec(sql, tuple(params))
 
 def list_sessions() -> str:
     """List all sessions with stats."""
     return db_exec('''
     SELECT 
-    session_id,
-    COUNT(*) as message_count,
-    MIN(timestamp) as first_message,
-    MAX(timestamp) as last_message
+        session_id,
+        COUNT(*) as message_count,
+        MIN(timestamp) as first_message,
+        MAX(timestamp) as last_message
     FROM messages
     GROUP BY session_id
     ORDER BY last_message DESC
@@ -205,11 +206,11 @@ def get_session_stats(session: str) -> str:
     """Get statistics for a session."""
     return db_exec('''
     SELECT
-    COUNT(*) as total_messages,
-    SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as user_messages,
-    SUM(CASE WHEN role = 'assistant' THEN 1 ELSE 0 END) as assistant_messages,
-    MIN(timestamp) as first_message,
-    MAX(timestamp) as last_message
+        COUNT(*) as total_messages,
+        SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as user_messages,
+        SUM(CASE WHEN role = 'assistant' THEN 1 ELSE 0 END) as assistant_messages,
+        MIN(timestamp) as first_message,
+        MAX(timestamp) as last_message
     FROM messages
     WHERE session_id = ?
     ''', (session,))
@@ -225,10 +226,10 @@ def delete_session(session: str) -> str:
 def build_messages(system: str, user: str, history: str = '') -> str:
     """Build messages array for LLM API."""
     messages = []
-    
+
     if system:
         messages.append({'role': 'system', 'content': system})
-    
+
     if history:
         try:
             for line in history.strip().split('\n'):
@@ -237,7 +238,7 @@ def build_messages(system: str, user: str, history: str = '') -> str:
                     messages.append({'role': role, 'content': content})
         except Exception:
             pass
-    
+
     messages.append({'role': 'user', 'content': user})
     return json.dumps(messages)
 
@@ -245,17 +246,17 @@ def parse_response(response: str) -> str:
     """Parse LLM API response to extract content."""
     try:
         data = json.loads(response)
-        
+
         # OpenAI/OpenRouter format
         if 'choices' in data:
             return data['choices'][0]['message']['content']
-        
+
         # Anthropic format
         if 'content' in data:
             for item in data['content']:
                 if item.get('type') == 'text':
                     return item.get('text', '')
-        
+
         return ''
     except Exception:
         return response
@@ -270,6 +271,19 @@ def extract_tool_call(response: str) -> str:
         return ''
     except Exception:
         return ''
+
+def build_request(messages: str, model: str, temperature: float = 0.7, max_tokens: int = 4096) -> str:
+    """Build LLM API request JSON."""
+    try:
+        request = {
+            'model': model,
+            'messages': json.loads(messages) if isinstance(messages, str) else messages,
+            'max_tokens': max_tokens,
+            'temperature': temperature
+        }
+        return json.dumps(request)
+    except Exception as e:
+        return json.dumps({'error': str(e)})
 
 # ============================================================================
 # Database Utilities
@@ -298,7 +312,7 @@ def main():
     if len(sys.argv) < 2:
         print_usage()
         sys.exit(1)
-    
+
     # Parse --db option if present
     args = sys.argv[1:]
     if args and args[0] == '--db':
@@ -307,62 +321,62 @@ def main():
             sys.exit(1)
         set_db_path(args[1])
         args = args[2:]
-    
+
     if not args:
         print_usage()
         sys.exit(1)
-    
+
     cmd = args[0]
     args = args[1:]
-    
+
     try:
         result = ''
-        
+
         if cmd == 'db-exec':
             sql = args[0]
             params = json.loads(args[1]) if len(args) > 1 else ()
             result = db_exec(sql, tuple(params))
-        
+
         elif cmd == 'db-script':
             sql = args[0]
             result = db_exec_script(sql)
-        
+
         elif cmd == 'save-msg':
             session, role, content = args[0], args[1], args[2]
             metadata = args[3] if len(args) > 3 else ''
             result = save_message(session, role, content, metadata)
-        
+
         elif cmd == 'get-msgs':
             session = args[0]
             limit = int(args[1]) if len(args) > 1 else 100
             result = get_messages(session, limit)
-        
+
         elif cmd == 'get-context':
             session = args[0]
             limit = int(args[1]) if len(args) > 1 else 10
             result = get_context(session, limit)
-        
+
         elif cmd == 'search':
             query = args[0]
             session = args[1] if len(args) > 1 else ''
             limit = int(args[2]) if len(args) > 2 else 20
             result = search_messages(query, session, limit)
-        
+
         elif cmd == 'list-sessions':
             result = list_sessions()
-        
+
         elif cmd == 'session-stats':
             session = args[0]
             result = get_session_stats(session)
-        
+
         elif cmd == 'delete-session':
             session = args[0]
             result = delete_session(session)
-        
+
         elif cmd == 'json-get':
             data, path = args[0], args[1]
             result = json_get(data, path)
-        
+
         elif cmd == 'json-build':
             kwargs = {}
             for arg in args:
@@ -370,35 +384,42 @@ def main():
                     k, v = arg.split('=', 1)
                     kwargs[k] = v
             result = json_build(**kwargs)
-        
+
         elif cmd == 'build-msgs':
             system = args[0] if args else ''
             user = args[1] if len(args) > 1 else ''
             history = args[2] if len(args) > 2 else ''
             result = build_messages(system, user, history)
-        
+
         elif cmd == 'parse-response':
             response = args[0]
             result = parse_response(response)
-        
+
         elif cmd == 'extract-tool':
             response = args[0]
             result = extract_tool_call(response)
-        
+
+        elif cmd == 'build-request':
+            messages = args[0]
+            model = args[1] if len(args) > 1 else 'gpt-4'
+            temperature = float(args[2]) if len(args) > 2 else 0.7
+            max_tokens = int(args[3]) if len(args) > 3 else 4096
+            result = build_request(messages, model, temperature, max_tokens)
+
         elif cmd == 'schema-version':
             result = str(get_schema_version())
-        
+
         elif cmd == 'check-db':
             result = 'ok' if check_database() else 'error'
-        
+
         else:
             print(f"Unknown command: {cmd}", file=sys.stderr)
             print_usage()
             sys.exit(1)
-        
+
         if result:
             print(result)
-        
+
     except Exception as e:
         print(json.dumps({'error': str(e)}), file=sys.stderr)
         sys.exit(1)

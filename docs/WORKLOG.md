@@ -111,5 +111,21 @@
  - Removed 9 lines of embedded Python heredoc
  - Now uses: python3 $PYHELPER build-msgs "$system" "$user" "$history"
  - Added history parameter support (was missing before)
-- Next: Refactor call_llm() response parsing
+- [x] Refactored call_llm() response parsing
+ - Added build_request() function to pyhelper.py
+ - Added 'build-request' CLI command
+ - Removed 20 lines of embedded Python heredoc (request building + response parsing)
+ - Now uses: python3 $PYHELPER build-request "$messages" "$model" "$temp" 4096
+ - Now uses: python3 $PYHELPER parse-response "$content"
+- [x] Fixed API key variable in curl command (was *** now $api_key)
+- All 6 tests passed:
+ - test_database.sh: PASS
+ - test_llm.sh: PASS
+ - test_memory.sh: PASS
+ - test_memory_refactored.sh: PASS
+ - test_telegram_gateway.sh: PASS
+ - test_tools.sh: PASS
+- llm.sh now: ~135 lines (down from ~152)
+- Total embedded Python removed from llm.sh: ~29 lines
+- Next: Phase 2.4 - Refactor tools.sh
 

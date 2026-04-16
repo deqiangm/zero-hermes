@@ -60,18 +60,8 @@ call_llm() {
  
  log_debug "Calling $provider: $model"
  
- # Build request
- local request=$(python3 << EOF
-import json
-data = {
- "model": "$model",
- "messages": $messages,
- "max_tokens": 4096,
- "temperature": $DEFAULT_TEMPERATURE
-}
-print(json.dumps(data))
-EOF
-)
+ # Build request using pyhelper
+ local request=$(python3 "$PYHELPER" build-request "$messages" "$model" "$DEFAULT_TEMPERATURE" 4096)
  
  # Make API call
  local response
@@ -89,15 +79,8 @@ EOF
  return 1
  fi
  
- # Extract content using Python
- python3 << EOF
-import json
-data = json.loads("""$content""")
-if "choices" in data:
- print(data["choices"][0]["message"]["content"])
-elif "content" in data:
- print(data["content"][0]["text"])
-EOF
+ # Extract content using pyhelper
+ python3 "$PYHELPER" parse-response "$content"
 }
 
 # Call with retry
