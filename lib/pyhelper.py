@@ -59,19 +59,20 @@ def get_db() -> sqlite3.Connection:
     """Get database connection (lazy initialization, reused)."""
     global _db_conn
     db_path = get_db_path()
-    if _db_conn is None or _db_path_override:
-        # Ensure directory exists
+    # Reconnect if no connection exists
+    if _db_conn is None:
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         _db_conn = sqlite3.connect(db_path)
         _db_conn.row_factory = sqlite3.Row
     return _db_conn
 
 def close_db():
-    """Close database connection."""
-    global _db_conn
+    """Close database connection and reset state."""
+    global _db_conn, _db_path_override
     if _db_conn:
         _db_conn.close()
-        _db_conn = None
+    _db_conn = None
+    _db_path_override = None
 
 # ============================================================================
 # Database Operations

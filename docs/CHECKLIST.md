@@ -77,10 +77,10 @@
 ## Phase 4: Testing
 
 ### 4.1 Python Tests
-- [ ] Create tests/test_pyhelper.py
-- [ ] Test database functions
-- [ ] Test JSON functions
-- [ ] Test message functions
+- [x] Create tests/test_pyhelper.py
+- [x] Test database functions
+- [x] Test JSON functions
+- [x] Test message functions
 
 ### 4.2 Shell Tests
 - [ ] Update tests/test_database.sh
