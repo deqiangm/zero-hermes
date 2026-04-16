@@ -164,3 +164,17 @@
 - Total embedded Python removed from agent_loop.sh: ~40 lines
 - Next: Phase 4 - Testing
 
+### 2026-04-16 (current session - Phase 4.1)
+- Phase 4.1 COMPLETE: Python tests created
+- [x] Created tests/test_pyhelper.py with 29 test cases
+- Tests cover:
+ - TestDatabaseConnection (3 tests)
+ - TestDatabaseExec (2 tests)
+ - TestJSONUtilities (6 tests)
+ - TestMessageOperations (6 tests)
+ - TestLLMSupport (9 tests)
+ - TestDatabaseUtilities (2 tests)
+- Fixed close_db() to reset _db_path_override state
+- All 29 tests passing
+- Next: Phase 4.2 - Shell tests update
+
