@@ -111,34 +111,34 @@ sql_exec() {
  local sql="$1"
  local db="${2:-$DB_PATH}"
  
- python3 << EOF
+ python3 -c "
 import sqlite3
 import sys
 
-db_path = "$db"
-sql = """$sql"""
+db_path = '$db'
+sql = '''$sql'''
 
 try:
- conn = sqlite3.connect(db_path)
- cursor = conn.cursor()
- cursor.executescript(sql)
- conn.commit()
- 
- # If it's a SELECT, return results
- if sql.strip().upper().startswith('SELECT'):
- cursor.execute(sql)
- rows = cursor.fetchall()
- if rows:
- for row in rows:
- print('|'.join(str(c) if c else '' for c in row))
- else:
- print("Changes:", conn.total_changes)
- 
- conn.close()
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.executescript(sql)
+    conn.commit()
+    
+    # If it's a SELECT, return results
+    if sql.strip().upper().startswith('SELECT'):
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        if rows:
+            for row in rows:
+                print('|'.join(str(c) if c else '' for c in row))
+    else:
+        print('Changes:', conn.total_changes)
+    
+    conn.close()
 except Exception as e:
- print(f"ERROR: {e}", file=sys.stderr)
- sys.exit(1)
-EOF
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+"
 }
 
 # Execute SQL and return JSON
@@ -146,12 +146,12 @@ sql_exec_json() {
  local sql="$1"
  local db="${2:-$DB_PATH}"
  
- python3 << EOF
+ python3 -c "
 import sqlite3
 import json
 
-db_path = "$db"
-sql = """$sql"""
+db_path = '$db'
+sql = '''$sql'''
 
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
@@ -164,7 +164,7 @@ rows = cursor.fetchall()
 results = [dict(zip(columns, row)) for row in rows]
 print(json.dumps(results))
 conn.close()
-EOF
+"
 }
 
 # ============================================================================
