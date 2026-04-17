@@ -83,10 +83,10 @@
 - [x] Test message functions
 
 ### 4.2 Shell Tests
-- [ ] Update tests/test_database.sh
-- [ ] Update tests/test_memory.sh
-- [ ] Run all tests
-- [ ] Fix failures
+- [x] Update tests/test_database.sh
+- [x] Update tests/test_memory.sh
+- [x] Run all tests
+- [x] Fix failures
 
 ---
 

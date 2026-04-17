@@ -16,20 +16,13 @@ echo "=== Testing Database Initialization ==="
 # Test 1: Run migrations
 echo -n "Test 1: Running migrations... "
 for m in "$PROJECT_ROOT/etc/migrations"/*.sql; do
- sql_exec "$(cat "$m")" "$TEST_DB" > /dev/null 2>&1
+ python3 "$PYHELPER" --db "$TEST_DB" db-script "$(cat "$m")" > /dev/null 2>&1
 done
 echo "PASS"
 
 # Test 2: Check schema version
 echo -n "Test 2: Checking schema version... "
-VERSION=$(python3 -c "
-import sqlite3
-conn = sqlite3.connect('$TEST_DB')
-cursor = conn.cursor()
-cursor.execute('SELECT COALESCE(MAX(version), 0) FROM schema_version')
-print(cursor.fetchone()[0])
-conn.close()
-")
+VERSION=$(python3 "$PYHELPER" --db "$TEST_DB" schema-version)
 if [[ "$VERSION" == "4" ]]; then
  echo "PASS (version: $VERSION)"
 else
@@ -39,50 +32,31 @@ fi
 
 # Test 3: Check tables exist
 echo -n "Test 3: Checking tables exist... "
-TABLES=$(python3 -c "
-import sqlite3
-conn = sqlite3.connect('$TEST_DB')
-cursor = conn.cursor()
-cursor.execute(\"SELECT name FROM sqlite_master WHERE type='table'\")
-print(' '.join([r[0] for r in cursor.fetchall()]))
-conn.close()
-")
+TABLES=$(python3 "$PYHELPER" --db "$TEST_DB" db-exec "SELECT name FROM sqlite_master WHERE type='table'" | \
+ python3 -c "import json,sys; data=json.load(sys.stdin); print(' '.join([r['name'] for r in data]))")
 for t in messages messages_fts task_patterns feedback schema_version; do
  if [[ ! "$TABLES" =~ $t ]]; then
-  echo "FAIL (missing table: $t)"
-  exit 1
+ echo "FAIL (missing table: $t)"
+ exit 1
  fi
 done
 echo "PASS"
 
 # Test 4: Check FTS5 trigger exists
 echo -n "Test 4: Checking FTS5 triggers... "
-TRIGGERS=$(python3 -c "
-import sqlite3
-conn = sqlite3.connect('$TEST_DB')
-cursor = conn.cursor()
-cursor.execute(\"SELECT name FROM sqlite_master WHERE type='trigger'\")
-print(' '.join([r[0] for r in cursor.fetchall()]))
-conn.close()
-")
+TRIGGERS=$(python3 "$PYHELPER" --db "$TEST_DB" db-exec "SELECT name FROM sqlite_master WHERE type='trigger'" | \
+ python3 -c "import json,sys; data=json.load(sys.stdin); print(' '.join([r['name'] for r in data]))")
 for t in messages_ai messages_ad messages_au; do
  if [[ ! "$TRIGGERS" =~ $t ]]; then
-  echo "FAIL (missing trigger: $t)"
-  exit 1
+ echo "FAIL (missing trigger: $t)"
+ exit 1
  fi
 done
 echo "PASS"
 
 # Test 5: Check integrity
 echo -n "Test 5: Database integrity check... "
-INTEGRITY=$(python3 -c "
-import sqlite3
-conn = sqlite3.connect('$TEST_DB')
-cursor = conn.cursor()
-cursor.execute('PRAGMA integrity_check')
-print(cursor.fetchone()[0])
-conn.close()
-")
+INTEGRITY=$(python3 "$PYHELPER" --db "$TEST_DB" check-db)
 if [[ "$INTEGRITY" == "ok" ]]; then
  echo "PASS"
 else

@@ -178,3 +178,21 @@
 - All 29 tests passing
 - Next: Phase 4.2 - Shell tests update
 
+### 2026-04-17 (current session - Phase 4.2)
+- Phase 4.2 COMPLETE: Shell tests refactored
+- [x] Updated tests/test_database.sh
+ - Removed embedded Python heredocs (lines 25-32, 42-49, 60-67, 78-85)
+ - Now uses: python3 $PYHELPER --db $TEST_DB schema-version
+ - Now uses: python3 $PYHELPER --db $TEST_DB check-db
+ - Uses inline Python for JSON parsing: python3 -c "import json,sys..."
+- [x] Updated tests/test_memory.sh
+ - Removed embedded Python heredocs for message operations
+ - Now uses: python3 $PYHELPER --db $TEST_DB save-msg/get-msgs/search/session-stats/delete-session
+ - Uses inline Python for JSON count extraction
+- All tests passing:
+ - test_database.sh: 5/5 PASS
+ - test_memory.sh: 5/5 PASS
+ - test_pyhelper.py: 29/29 PASS
+- Total embedded Python removed from tests: ~50 lines
+- Next: Phase 5 - Documentation & Cleanup
+
