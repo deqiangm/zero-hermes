@@ -13,6 +13,34 @@ A minimal AI agent with Python-based SQLite and JSON processing.
 
 ## Quick Start
 
+### One-Line Install (Recommended)
+
+```bash
+# Linux and macOS
+curl -fsSL https://raw.githubusercontent.com/deqiangm/zero-hermes/main/install.sh | bash
+```
+
+This will:
+- Detect your platform (Linux/macOS, Intel/ARM)
+- Install to `~/.zerohermes`
+- Initialize the database
+- Add `zero-hermes` to your PATH
+- Create a `.env` template for your API keys
+
+After installation:
+```bash
+# 1. Add your API key
+nano ~/.zerohermes/.env
+
+# 2. Reload shell
+source ~/.bashrc  # or ~/.zshrc
+
+# 3. Run
+zero-hermes
+```
+
+### Manual Install
+
 ```bash
 # Clone
 git clone https://github.com/deqiangm/zero-hermes.git
@@ -27,6 +55,13 @@ cp .env.example .env
 
 # Run CLI
 ./bin/zero-hermes
+```
+
+### Custom Install Location
+
+```bash
+# Install to custom directory
+ZEROTHERMES_HOME=~/my-agent curl -fsSL https://raw.githubusercontent.com/deqiangm/zero-hermes/main/install.sh | bash
 ```
 
 ## Architecture

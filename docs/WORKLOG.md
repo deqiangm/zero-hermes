@@ -223,3 +223,36 @@
  - Python: 460 lines (target was ~300-400, slightly over but comprehensive)
 - All tests passing
 
+---
+
+## Session: 2026-04-18 One-Line Install
+
+### Completed
+- [x] Created install.sh script (~400 lines)
+ - Platform detection (Linux/macOS, Intel/ARM)
+ - Dependency checking (bash 3.2+, git, python3, curl)
+ - Database initialization
+ - Environment configuration
+ - Shell integration (bashrc/zshrc)
+ - Update mode support (reinstall existing)
+- [x] Created .env.example template with all providers
+- [x] Updated README.md with one-line install instructions
+- [x] Tested install script logic
+
+### Features
+- **One-line install**: `curl -fsSL https://raw.githubusercontent.com/deqiangm/zero-hermes/main/install.sh | bash`
+- **Platform support**: Linux (x64/arm64), macOS (Intel/Apple Silicon)
+- **Auto PATH setup**: Adds to ~/.bashrc or ~/.zshrc
+- **Custom install**: `ZEROTHERMES_HOME=~/custom curl ...`
+- **Update mode**: Re-run to update existing installation
+
+### Pattern Reference
+Studied these projects for install script patterns:
+- Homebrew: Strict bash version check, interactive prompts
+- nvm: XDG support, profile detection
+- rustup: Platform detection, minimal dependencies
+
+### Next
+- Push to GitHub
+- Test on clean Linux VM
+
