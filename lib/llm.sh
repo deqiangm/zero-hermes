@@ -10,12 +10,17 @@ DEFAULT_TIMEOUT="${LLM_TIMEOUT:-120}"
 DEFAULT_MAX_RETRIES="${LLM_MAX_RETRIES:-3}"
 DEFAULT_TEMPERATURE="${LLM_TEMPERATURE:-0.7}"
 
+# Custom base URL for OpenAI-compatible APIs (e.g., NVIDIA NIM)
+# If set, this overrides the provider endpoint
+CUSTOM_BASE_URL="${LLM_BASE_URL:-}"
+
 # Provider endpoints
 declare -A PROVIDER_ENDPOINTS=(
  [openrouter]="https://openrouter.ai/api/v1/chat/completions"
  [openai]="https://api.openai.com/v1/chat/completions"
  [anthropic]="https://api.anthropic.com/v1/messages"
  [zai]="https://api.z.ai/v1/chat/completions"
+ [nvidia]="https://integrate.api.nvidia.com/v1/chat/completions"
 )
 
 get_api_key() {
@@ -25,6 +30,7 @@ get_api_key() {
  openai) echo "${OPENAI_API_KEY:-}" ;;
  anthropic) echo "${ANTHROPIC_API_KEY:-}" ;;
  zai) echo "${ZAI_API_KEY:-}" ;;
+ nvidia) echo "${NVIDIA_API_KEY:-${OPENAI_API_KEY:-}}" ;;
  esac
 }
 
@@ -56,9 +62,16 @@ call_llm() {
  fi
  
  local api_key=$(get_api_key "$provider")
- local endpoint="${PROVIDER_ENDPOINTS[$provider]}"
  
- log_debug "Calling $provider: $model"
+ # Use CUSTOM_BASE_URL if set, otherwise use provider endpoint
+ local endpoint
+ if [[ -n "$CUSTOM_BASE_URL" ]]; then
+ endpoint="$CUSTOM_BASE_URL"
+ else
+ endpoint="${PROVIDER_ENDPOINTS[$provider]}"
+ fi
+ 
+ log_debug "Calling $provider: $model at $endpoint"
  
  # Build request using pyhelper
  local request=$(python3 "$PYHELPER" build-request "$messages" "$model" "$DEFAULT_TEMPERATURE" 4096)
@@ -75,7 +88,7 @@ call_llm() {
  local content=$(echo "$response" | head -n -1)
  
  if [[ "$http_code" -lt 200 ]] || [[ "$http_code" -ge 300 ]]; then
- log_error "API failed: HTTP $http_code"
+ log_error "API failed: HTTP $http_code - $content"
  return 1
  fi
  

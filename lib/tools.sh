@@ -32,9 +32,9 @@ tool_shell_readonly() {
  
  check_dangerous "$cmd" && { log_error "Dangerous command blocked"; return 1; }
  
- # Allowlist of safe commands
+ # Allowlist of safe commands (match command at start, optionally with args)
  local safe="ls|cat|head|tail|grep|find|pwd|echo|wc|sort|uniq|awk|sed|tr|cut|date|whoami|uname|df|du|ps"
- echo "$cmd" | grep -qE "^($safe)\s" || { log_error "Command not allowed"; return 1; }
+ echo "$cmd" | grep -qE "^($safe)(\s|$)" || { log_error "Command not allowed"; return 1; }
  
  timeout "$timeout" bash -c "$cmd" 2>&1
 }
@@ -85,7 +85,8 @@ execute_tool() {
  
  case "$tool" in
  shell_readonly)
- tool_shell_readonly "$args" "$timeout"
+ cmd=$(json_get "$args" "command")
+ tool_shell_readonly "$cmd" "$timeout"
  ;;
  file_read)
  local path=$(json_get "$args" "path")
