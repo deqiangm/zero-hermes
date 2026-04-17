@@ -81,11 +81,12 @@ check_dependencies() {
         error "Missing dependencies: ${missing[*]}\n\nInstall with:\n  macOS: brew install ${missing[*]}\n  Linux: sudo apt install ${missing[*]}"
     fi
     
-    # Check Python version (3.8+)
-    PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-    if [[ $(echo "$PYTHON_VERSION < 3.8" | bc -l 2>/dev/null || echo "0") -eq 1 ]]; then
-        error "Python 3.8+ required (found $PYTHON_VERSION)"
-    fi
+ # Check Python version (3.8+)
+ PYTHON_MAJOR=$(python3 -c 'import sys; print(sys.version_info.major)')
+ PYTHON_MINOR=$(python3 -c 'import sys; print(sys.version_info.minor)')
+ if [[ "$PYTHON_MAJOR" -lt 3 ]] || [[ "$PYTHON_MAJOR" -eq 3 && "$PYTHON_MINOR" -lt 8 ]]; then
+ error "Python 3.8+ required (found $PYTHON_MAJOR.$PYTHON_MINOR)"
+ fi
     
     success "All dependencies satisfied"
 }
@@ -148,15 +149,31 @@ install_zerohermes() {
 # =============================================================================
 
 initialize_database() {
-    info "Initializing database..."
-    
-    DB_DIR="$INSTALL_DIR/data"
-    mkdir -p "$DB_DIR"
-    
-    # Create sessions database
-    python3 lib/pyhelper.py --db "$DB_DIR/sessions.db" init-db 2>/dev/null || true
-    
-    success "Database initialized"
+ info "Initializing database..."
+ 
+ DB_DIR="$INSTALL_DIR/data"
+ mkdir -p "$DB_DIR"
+ DB_PATH="$DB_DIR/sessions.db"
+ 
+ # Create database schema
+ python3 -c "
+import sqlite3
+conn = sqlite3.connect('$DB_PATH')
+cur = conn.cursor()
+cur.execute('''CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+    metadata TEXT
+)''')
+cur.execute('CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id)')
+conn.commit()
+conn.close()
+"
+ 
+ success "Database initialized"
 }
 
 # =============================================================================
