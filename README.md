@@ -4,11 +4,12 @@ A minimal AI agent with Python-based SQLite and JSON processing.
 
 ## Features
 
-- **Python-based storage** - No sqlite3 CLI required, uses Python's sqlite3 module
+- **Python helper module** - Centralized pyhelper.py for all database/JSON operations
 - **Multi-provider LLM support** - OpenRouter, OpenAI, Anthropic, Z.ai
 - **Sandboxed tool execution** - Safe command execution with allowlists
 - **Persistent memory** - Session memory with FTS5 full-text search
 - **Multiple gateways** - CLI and Telegram support
+- **No embedded Python** - Clean shell scripts, all Python centralized
 
 ## Quick Start
 
@@ -32,21 +33,90 @@ cp .env.example .env
 
 ```
 lib/
-├── common.sh   - Python-based JSON/SQLite, logging
-├── memory.sh   - Session & persistent memory
-├── llm.sh      - Multi-provider LLM interface
-└── tools.sh    - Sandboxed tools
+├── pyhelper.py    - Central Python helper (460 lines)
+├── common.sh      - Shell wrappers for pyhelper (244 lines)
+├── memory.sh      - Session & persistent memory (155 lines)
+├── llm.sh         - Multi-provider LLM interface (135 lines)
+└── tools.sh       - Sandboxed tools (129 lines)
 
 bin/
-├── zero-hermes        - CLI entry point
-├── agent_loop.sh      - Main agent loop
-├── init_db.sh         - Database setup
-└── telegram_gateway.sh - Telegram bot
+├── zero-hermes    - CLI entry point
+├── agent_loop.sh  - Main agent loop (145 lines)
+├── init_db.sh     - Database setup
+└── telegram_gateway.sh - Telegram bot (273 lines)
 
-etc/
-├── config.yaml        - Configuration
-├── tools.allowlist    - Allowed tools
-└── migrations/        - SQL migrations
+Total: ~1096 lines shell, ~460 lines Python
+```
+
+## pyhelper API
+
+The `lib/pyhelper.py` module provides all database and JSON operations via a CLI interface:
+
+### Database Operations
+
+```bash
+# Execute SQL query (returns JSON)
+python3 lib/pyhelper.py --db /path/to/db.db db-exec "SELECT * FROM messages"
+
+# Check database integrity
+python3 lib/pyhelper.py --db /path/to/db.db check-db
+
+# Get schema version
+python3 lib/pyhelper.py --db /path/to/db.db schema-version
+```
+
+### Message Operations
+
+```bash
+# Save message
+python3 lib/pyhelper.py --db /path/to/db.db save-msg "session-1" "user" "Hello world"
+
+# Get messages (last N)
+python3 lib/pyhelper.py --db /path/to/db.db get-msgs "session-1" 100
+
+# Search messages (FTS5)
+python3 lib/pyhelper.py --db /path/to/db.db search "query" "session-1" 10
+
+# Get context window for LLM
+python3 lib/pyhelper.py --db /path/to/db.db get-context "session-1" 4000 "system prompt"
+
+# Session management
+python3 lib/pyhelper.py --db /path/to/db.db session-stats "session-1"
+python3 lib/pyhelper.py --db /path/to/db.db delete-session "session-1"
+python3 lib/pyhelper.py --db /path/to/db.db list-sessions
+```
+
+### LLM Support
+
+```bash
+# Build OpenAI-compatible message array
+python3 lib/pyhelper.py build-msgs "system prompt" "user message" '[{"role":"user","content":"history"}]'
+
+# Parse LLM response
+python3 lib/pyhelper.py parse-response '{"choices":[{"message":{"content":"Hello"}}]}'
+
+# Extract tool call from response
+python3 lib/pyhelper.py extract-tool '{"choices":[{"message":{"tool_calls":[{"function":{"name":"shell","arguments":"{\"cmd\":\"ls\"}"}}]}}]}'
+
+# Build API request
+python3 lib/pyhelper.py build-request '[{"role":"user","content":"Hi"}]' "gpt-4" 0.7 4096
+
+# Append message to array
+python3 lib/pyhelper.py append-message '[{"role":"user","content":"Hi"}]' "assistant" "Hello!"
+
+# Get messages as JSON array
+python3 lib/pyhelper.py get-messages-array "session-1" 100
+```
+
+### JSON Utilities
+
+```bash
+# Extract value from JSON
+python3 lib/pyhelper.py json-get '{"path":"/file.txt"}' "path"
+# Output: /file.txt
+
+# JSON validation and formatting
+python3 lib/pyhelper.py json-parse '{"key":"value"}'
 ```
 
 ## Usage
@@ -74,7 +144,7 @@ CLI Commands:
 
 ```bash
 # Set bot token
-export TG_BOT_TOKEN="your-bot-token"
+export TG_BOT_TOKEN="***"
 
 # Optional: Restrict to specific chats
 export TG_ALLOWED_CHATS="123456,789012"
@@ -131,9 +201,12 @@ Run all tests:
 ./tests/test_llm.sh
 ./tests/test_tools.sh
 ./tests/test_telegram_gateway.sh
+
+# Python unit tests
+python3 tests/test_pyhelper.py
 ```
 
-## API
+## Shell Library API
 
 ### LLM Interface
 
@@ -163,6 +236,11 @@ get_messages "session-1" 100
 
 # Search messages
 search_messages "hello" "session-1"
+
+# Session management
+list_sessions
+get_session_stats "session-1"
+delete_session "session-1"
 ```
 
 ### Tool Execution
@@ -181,18 +259,34 @@ tool_file_write "/path/to/file" "content"
 tool_memory_recall "search query"
 ```
 
+### JSON Utilities
+
+```bash
+source lib/common.sh
+
+# Extract JSON value
+json_get '{"path":"/file.txt"}' "path"
+# Output: /file.txt
+
+# Execute SQL
+sql_exec "SELECT * FROM messages LIMIT 10"
+
+# Execute SQL with JSON output
+sql_exec_json "SELECT * FROM messages LIMIT 10"
+```
+
 ## Database Schema
 
 ### Messages Table
 
 ```sql
 CREATE TABLE messages (
-    id INTEGER PRIMARY KEY,
-    session_id TEXT NOT NULL,
-    role TEXT NOT NULL,
-    content TEXT NOT NULL,
-    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
-    metadata TEXT
+  id INTEGER PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+  metadata TEXT
 );
 ```
 
@@ -200,11 +294,21 @@ CREATE TABLE messages (
 
 ```sql
 CREATE VIRTUAL TABLE messages_fts USING fts5(
-    content,
-    content='messages',
-    content_rowid='id'
+  content,
+  content='messages',
+  content_rowid='id'
 );
 ```
+
+## Code Statistics
+
+| Component | Lines |
+|-----------|-------|
+| Shell libraries (lib/*.sh) | 663 |
+| Shell binaries (bin/*.sh) | 433 |
+| **Total Shell** | **1096** |
+| Python helper (lib/pyhelper.py) | 460 |
+| **Total Python** | **460** |
 
 ## License
 

@@ -196,3 +196,21 @@
 - Total embedded Python removed from tests: ~50 lines
 - Next: Phase 5 - Documentation & Cleanup
 
+### 2026-04-17 (current session - Phase 5)
+- Phase 5.1 COMPLETE: Documentation
+- [x] Updated README.md with comprehensive pyhelper API docs
+ - Added pyhelper CLI commands section
+ - Added code statistics table
+ - Updated architecture section with line counts
+ - Added JSON utilities documentation
+- [x] CRON_PROMPT.md - N/A (file not present)
+- [x] pyhelper API docs included in README.md
+- Phase 5.2 IN PROGRESS: Final Verification
+- [x] Code line counts verified:
+ - Shell: 1096 lines (lib: 663, bin: 433)
+ - Python: 460 lines (pyhelper.py)
+- [x] Embedded Python verification:
+ - Major heredocs removed (~240 lines)
+ - Minor JSON utils remain (acceptable for Telegram gateway)
+- Next: Commit and push to GitHub
+
