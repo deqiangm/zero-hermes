@@ -4,3 +4,5 @@ file_read
 file_write
 file_search
 memory_recall
+memory
+skill_manage
