@@ -192,6 +192,24 @@ get_timestamp() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
 init_project() {
  log_info "Initializing ZeroHermes V2..."
  
+ # Load environment from .env file
+ local env_file="$PROJECT_ROOT/.env"
+ if [[ -f "$env_file" ]]; then
+ log_debug "Loading environment from $env_file"
+ while IFS='=' read -r key value || [[ -n "$key" ]]; do
+ # Skip comments and empty lines
+ [[ "$key" =~ ^[[:space:]]*# ]] && continue
+ [[ -z "$key" ]] && continue
+ # Remove quotes from value
+ value="${value#\"}"
+ value="${value%\"}"
+ value="${value#\'}"
+ value="${value%\'}"
+ export "$key=$value"
+ done < "$env_file"
+ log_debug "Environment loaded: LLM_PROVIDER=$LLM_PROVIDER, LLM_MODEL=$LLM_MODEL"
+ fi
+ 
  if ! check_dependencies; then return 1; fi
  ensure_data_dir
  
